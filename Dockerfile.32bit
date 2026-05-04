@@ -1,25 +1,26 @@
 # Dockerfile for 32-bit JVM testing
-# This uses i386 architecture to run 32-bit JVM with 32-bit native library
+# Uses multiarch Debian with 32-bit packages
 
-FROM i386/debian:bullseye-slim
+FROM debian:bullseye-slim
 
-# Install 32-bit JDK and build tools
-RUN apt-get update && \
+# Enable i386 architecture
+RUN dpkg --add-architecture i386 && \
+    apt-get update && \
     apt-get install -y \
-        openjdk-17-jdk \
-        gcc \
-        g++ \
+        openjdk-17-jdk:i386 \
+        gcc-multilib \
+        g++-multilib \
+        libc6:i386 \
+        libstdc++6:i386 \
         make \
         file && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Verify we're running 32-bit
-RUN uname -m && file /bin/bash
-
-# Set JAVA_HOME for 32-bit JDK
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-i386
-ENV PATH=$JAVA_HOME/bin:$PATH
+# Find and set JAVA_HOME for 32-bit JDK
+RUN JAVA_HOME_32=$(find /usr/lib/jvm -name "java-17-openjdk-*" -type d | grep i386 | head -1) && \
+    echo "export JAVA_HOME=$JAVA_HOME_32" >> /etc/profile && \
+    echo "export PATH=\$JAVA_HOME/bin:\$PATH" >> /etc/profile
 
 # Set working directory
 WORKDIR /app
@@ -27,8 +28,10 @@ WORKDIR /app
 # Copy project files
 COPY . .
 
-# Build the project - will compile 32-bit native library
+# Build the project with 32-bit compilation
 RUN chmod +x build.sh && \
+    export JAVA_HOME=$(find /usr/lib/jvm -name "java-17-openjdk-*" -type d | grep i386 | head -1) && \
+    export PATH=$JAVA_HOME/bin:$PATH && \
     ./build.sh
 
 # Verify library is 32-bit
@@ -38,7 +41,9 @@ RUN file build/native-lib/lib/libnativemath.so
 ENV LD_LIBRARY_PATH=/app/build/native-lib/lib:$LD_LIBRARY_PATH
 
 # Run with 32-bit JVM loading 32-bit library (will SUCCEED)
-CMD ["java", \
-     "-Djava.library.path=/app/build/native-lib/lib", \
-     "-cp", "/app/dist/app-main.jar:/app/dist/service-lib.jar:/app/dist/native-lib.jar", \
-     "com.example.app.MainApp"]
+CMD export JAVA_HOME=$(find /usr/lib/jvm -name "java-17-openjdk-*" -type d | grep i386 | head -1) && \
+    export PATH=$JAVA_HOME/bin:$PATH && \
+    java -version && \
+    java -Djava.library.path=/app/build/native-lib/lib \
+         -cp /app/dist/app-main.jar:/app/dist/service-lib.jar:/app/dist/native-lib.jar \
+         com.example.app.MainApp
