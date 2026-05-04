@@ -1,0 +1,39 @@
+# Dockerfile for 32-bit JVM testing
+# This demonstrates 32-bit native library compilation
+# Note: On ARM, this will compile 32-bit x86 library using cross-compilation
+
+FROM debian:bullseye-slim
+
+# Install 64-bit JDK and cross-compilation tools for 32-bit
+RUN apt-get update && \
+    apt-get install -y \
+        openjdk-17-jdk \
+        gcc-multilib \
+        g++-multilib \
+        make \
+        file && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+ENV PATH=$JAVA_HOME/bin:$PATH
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files
+COPY . .
+
+# Build the project - will compile 32-bit native library
+RUN chmod +x build.sh && \
+    ./build.sh
+
+# Set library path
+ENV LD_LIBRARY_PATH=/app/build/native-lib/lib:$LD_LIBRARY_PATH
+
+# Run with 64-bit JVM trying to load 32-bit library (will FAIL)
+CMD ["java", \
+     "-Djava.library.path=/app/build/native-lib/lib", \
+     "-cp", "/app/build/dist/app-main.jar:/app/build/dist/service-lib.jar:/app/build/dist/native-lib.jar", \
+     "com.example.app.MainApp"]

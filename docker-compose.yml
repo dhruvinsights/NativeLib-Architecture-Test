@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # Test with 64-bit JVM - Expected to FAIL
+  test-64bit:
+    build:
+      context: .
+      dockerfile: Dockerfile.64bit
+    image: jni-mismatch-demo:64bit
+    container_name: jni-test-64bit
+    environment:
+      - LD_LIBRARY_PATH=/app/build/native-lib/lib
+    volumes:
+      - ./build:/app/build
+    command: >
+      sh -c "
+      echo '========================================';
+      echo '  Testing with 64-bit JVM';
+      echo '========================================';
+      echo '';
+      java -version;
+      echo '';
+      echo 'Architecture:';
+      uname -m;
+      file /app/build/native-lib/lib/libnativemath.so || echo 'Native library not found';
+      echo '';
+      echo 'Running application...';
+      echo '';
+      java -Djava.library.path=/app/build/native-lib/lib \
+           -cp /app/build/dist/app-main.jar:/app/build/dist/service-lib.jar:/app/build/dist/native-lib.jar \
+           com.example.app.MainApp || echo 'Expected failure occurred';
+      "
+
+  # Test with 32-bit JVM - Expected to SUCCEED
+  test-32bit:
+    build:
+      context: .
+      dockerfile: Dockerfile.32bit
+    image: jni-mismatch-demo:32bit
+    container_name: jni-test-32bit
+    environment:
+      - LD_LIBRARY_PATH=/app/build/native-lib/lib
+    volumes:
+      - ./build:/app/build
+    command: >
+      sh -c "
+      echo '========================================';
+      echo '  Testing with 32-bit JVM';
+      echo '========================================';
+      echo '';
+      java -version;
+      echo '';
+      echo 'Architecture:';
+      uname -m;
+      file /app/build/native-lib/lib/libnativemath.so || echo 'Native library not found';
+      echo '';
+      echo 'Running application...';
+      echo '';
+      java -Djava.library.path=/app/build/native-lib/lib \
+           -cp /app/build/dist/app-main.jar:/app/build/dist/service-lib.jar:/app/build/dist/native-lib.jar \
+           com.example.app.MainApp;
+      "
+
+# Made with Bob

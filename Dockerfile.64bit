@@ -1,0 +1,32 @@
+# Dockerfile for 64-bit JVM testing
+# This will FAIL to load the 32-bit native library
+
+FROM eclipse-temurin:25-jdk-noble
+
+# Install build tools
+RUN apt-get update && \
+    apt-get install -y gcc g++ make file && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy only the pre-built JARs and a dummy 32-bit library indicator
+COPY build/dist/*.jar /app/build/dist/
+COPY native-lib/src/main/native/*.c /app/native-lib/src/main/native/
+COPY native-lib/src/main/native/*.h /app/native-lib/src/main/native/
+
+# Create a fake 32-bit library file to simulate the scenario
+# In reality, we'll just create an incompatible library
+RUN mkdir -p /app/build/native-lib/lib && \
+    echo "This simulates a 32-bit library that cannot be loaded by 64-bit JVM" > /app/build/native-lib/lib/libnativemath.so
+
+# Set library path
+ENV LD_LIBRARY_PATH=/app/build/native-lib/lib:$LD_LIBRARY_PATH
+
+# Default command - this will FAIL because library is incompatible
+CMD ["java", \
+     "-Djava.library.path=/app/build/native-lib/lib", \
+     "-cp", "/app/build/dist/app-main.jar:/app/build/dist/service-lib.jar:/app/build/dist/native-lib.jar", \
+     "com.example.app.MainApp"]
