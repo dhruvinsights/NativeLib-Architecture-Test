@@ -1,22 +1,24 @@
 # Dockerfile for 32-bit JVM testing
-# This demonstrates 32-bit native library compilation
-# Note: On ARM, this will compile 32-bit x86 library using cross-compilation
+# This uses i386 architecture to run 32-bit JVM with 32-bit native library
 
-FROM debian:bullseye-slim
+FROM i386/debian:bullseye-slim
 
-# Install 64-bit JDK and cross-compilation tools for 32-bit
+# Install 32-bit JDK and build tools
 RUN apt-get update && \
     apt-get install -y \
         openjdk-17-jdk \
-        gcc-multilib \
-        g++-multilib \
+        gcc \
+        g++ \
         make \
         file && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Set JAVA_HOME
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+# Verify we're running 32-bit
+RUN uname -m && file /bin/bash
+
+# Set JAVA_HOME for 32-bit JDK
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-i386
 ENV PATH=$JAVA_HOME/bin:$PATH
 
 # Set working directory
@@ -29,11 +31,14 @@ COPY . .
 RUN chmod +x build.sh && \
     ./build.sh
 
+# Verify library is 32-bit
+RUN file build/native-lib/lib/libnativemath.so
+
 # Set library path
 ENV LD_LIBRARY_PATH=/app/build/native-lib/lib:$LD_LIBRARY_PATH
 
-# Run with 64-bit JVM trying to load 32-bit library (will FAIL)
+# Run with 32-bit JVM loading 32-bit library (will SUCCEED)
 CMD ["java", \
      "-Djava.library.path=/app/build/native-lib/lib", \
-     "-cp", "/app/build/dist/app-main.jar:/app/build/dist/service-lib.jar:/app/build/dist/native-lib.jar", \
+     "-cp", "/app/dist/app-main.jar:/app/dist/service-lib.jar:/app/dist/native-lib.jar", \
      "com.example.app.MainApp"]
