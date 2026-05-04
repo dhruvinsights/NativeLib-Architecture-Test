@@ -191,7 +191,7 @@ echo "=========================================="
 echo "Step 4: Creating native-lib JAR"
 echo "=========================================="
 cd build/native-lib/classes
-jar cf ../../dist/native-lib.jar com/example/nativelib/*.class
+jar cf ../../../dist/native-lib.jar com/example/nativelib/*.class
 cd ../../..
 echo -e "${GREEN}✓ Created: dist/native-lib.jar${NC}"
 echo ""
@@ -200,7 +200,7 @@ echo ""
 echo "=========================================="
 echo "Step 5: Compiling service-lib"
 echo "=========================================="
-javac -cp build/dist/native-lib.jar \
+javac -cp dist/native-lib.jar \
     -d build/service-lib/classes \
     service-lib/src/main/java/com/example/service/MathService.java
 
@@ -212,7 +212,7 @@ else
 fi
 
 cd build/service-lib/classes
-jar cf ../../dist/service-lib.jar com/example/service/*.class
+jar cf ../../../dist/service-lib.jar com/example/service/*.class
 cd ../../..
 echo -e "${GREEN}✓ Created: dist/service-lib.jar${NC}"
 echo ""
@@ -221,7 +221,7 @@ echo ""
 echo "=========================================="
 echo "Step 6: Compiling app-main"
 echo "=========================================="
-javac -cp build/dist/native-lib.jar:build/dist/service-lib.jar \
+javac -cp dist/native-lib.jar:dist/service-lib.jar \
     -d build/app-main/classes \
     app-main/src/main/java/com/example/app/MainApp.java
 
@@ -233,7 +233,7 @@ else
 fi
 
 cd build/app-main/classes
-jar cfe ../../dist/app-main.jar com.example.app.MainApp com/example/app/*.class
+jar cfe ../../../dist/app-main.jar com.example.app.MainApp com/example/app/*.class
 cd ../../..
 echo -e "${GREEN}✓ Created: dist/app-main.jar${NC}"
 echo ""
@@ -244,9 +244,9 @@ echo "  Build Complete!"
 echo "=========================================="
 echo ""
 echo "Output files:"
-echo "  - build/dist/native-lib.jar"
-echo "  - build/dist/service-lib.jar"
-echo "  - build/dist/app-main.jar"
+echo "  - dist/native-lib.jar"
+echo "  - dist/service-lib.jar"
+echo "  - dist/app-main.jar"
 echo "  - build/native-lib/lib/libnativemath.so (32-bit)"
 echo ""
 echo "To run the application:"
