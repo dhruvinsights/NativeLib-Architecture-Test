@@ -10,7 +10,7 @@ echo "=========================================="
 echo ""
 
 # Check if build exists
-if [ ! -f "build/dist/app-main.jar" ]; then
+if [ ! -f "dist/app-main.jar" ]; then
     echo "ERROR: Application not built. Run ./build.sh first."
     exit 1
 fi
@@ -33,9 +33,9 @@ fi
 
 echo ""
 echo "Classpath:"
-echo "  - build/dist/app-main.jar"
-echo "  - build/dist/service-lib.jar"
-echo "  - build/dist/native-lib.jar"
+echo "  - dist/app-main.jar"
+echo "  - dist/service-lib.jar"
+echo "  - dist/native-lib.jar"
 echo ""
 echo "Native Library Path: $NATIVE_LIB_PATH"
 echo ""
@@ -44,7 +44,7 @@ echo ""
 
 # Run the application
 java -Djava.library.path="$NATIVE_LIB_PATH" \
-     -cp "build/dist/app-main.jar:build/dist/service-lib.jar:build/dist/native-lib.jar" \
+     -cp "dist/app-main.jar:dist/service-lib.jar:dist/native-lib.jar" \
      com.example.app.MainApp
 
 EXIT_CODE=$?
